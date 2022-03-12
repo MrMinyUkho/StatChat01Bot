@@ -1,3 +1,11 @@
+import os
+import time
+import soundfile as sf
+import speech_recognition as sr
+from PIL import Image, ImageDraw, ImageFont
+
+r   = sr.Recognizer()
+
 def BadWordsCount(text):
     badW    = ['бля', "пидор", "хуй", "хуё", "еба", "еби", "хуя", "хули", "хуи", "пизда", "пезд", "пизд", "ёбн", "еблан", "ебей"]
     
