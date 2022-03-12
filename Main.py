@@ -84,6 +84,9 @@ async def TextMessageProc(msg: types.Message):
 
     DBusr.lstup = time.time()
     DBusr.save()
+
+    if msg.chat.type == "private":
+        await msg.reply(open("Help.txt", "r").read())
     
     if len(text) != 0:
 
@@ -91,8 +94,8 @@ async def TextMessageProc(msg: types.Message):
             helpMessage = open("Help.txt", "r").read()
             await bot.send_message(msg.chat.id, helpMessage)
 
-        if re.match(r"диверсант|бот|скайнет|бомж", text.lower()) is not None:
-            text = "".join(re.split(r"диверсант|бот|скайнет|бомж", text.lower(), maxsplit=1)).strip()
+        if re.match(r"бот|скайнет|бомж", text.lower()) is not None:
+            text = "".join(re.split(r"бот|скайнет|бомж", text.lower(), maxsplit=1)).strip()
 
             print(text)
 
