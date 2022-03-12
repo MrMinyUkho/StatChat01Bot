@@ -1,0 +1,6 @@
+/BotDataBase.sqlite
+/__pycache__
+/Photo/*
+/PhotoOut/*
+/Cert/*
+/AudioFile/*
