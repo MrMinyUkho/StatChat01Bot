@@ -1,0 +1,6 @@
+aiogram==2.19
+peewee==3.14.9
+SoundFile==0.10.3.post1
+SpeechRecognition==3.8.1
+Pillow==9.0.1
+wikipedia==1.4.0

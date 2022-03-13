@@ -154,8 +154,11 @@ async def TextMessageProc(msg: types.Message):
                 
                 print("\n#----------Загрузка пк-----------------------------------------------------\n")
 
-                await bot.send_message(msg.chat.id, f"Загрузка CPU: {CPULoad()}%\nЗагрузка RAM: { RAMLoad() }")
-                
+                if os.name == "posix":
+                    await bot.send_message(msg.chat.id, f"Загрузка CPU: {CPULoad()}%\nЗагрузка RAM: { RAMLoad() }")
+                else:
+                    await bot.reply("Система на которой запущен бот не является GNU/Linux выполнение команды невозможно(")
+
                 print("\n#--------------------------------------------------------------------------\n")
 
             elif re.match(r"фото|ржака|мем", text) is not None:
