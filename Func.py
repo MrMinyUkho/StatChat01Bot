@@ -6,6 +6,12 @@ from PIL import Image, ImageDraw, ImageFont
 
 r   = sr.Recognizer()
 
+def UpdateUser(User, msg):
+    User.UserName = msg["from"]["username"]
+    User.FrstName = msg["from"]["first_name"]
+    return User
+
+
 def BadWordsCount(text):
     badW    = ['бля', "пидор", "хуй", "хуё", "еба", "еби", "хуя", "хули", "хуи", "пизда", "пезд", "пизд", "ёбн", "еблан", "ебей"]
     

@@ -6,10 +6,11 @@ import time
 import datetime
 import wikipedia
 import soundfile as sf
+import matplotlib.pyplot as plt
 import speech_recognition as sr
 from Func import *
 from random import choice
-from Models import User, Married
+from Models import User, Married, WordsPerDay
 from PIL import Image, ImageDraw, ImageFont
 from aiogram import Bot, Dispatcher, executor, types
 
@@ -41,7 +42,7 @@ async def TextMessageProc(msg: types.Message):
     msgTime = time.time()
     print(DBusr)
     if DBusr is None:
-        DBusr = User(ChatID=msg.chat.id, TgID=msg["from"]["id"], UserName=msg["from"]["username"], FrstName=msg["from"]["first_name"], lstup=time.time())
+        DBusr = User(ChatID=msg.chat.id, TgID=msg["from"]["id"], UserName=msg["from"]["username"], FrstName=msg["from"]["first_name"], lstup=datetime.date.today())
         DBusr.save()
     
     DBusr = User.get_or_none(User.TgID == msg["from"]["id"], User.ChatID == msg.chat.id)
@@ -72,6 +73,8 @@ async def TextMessageProc(msg: types.Message):
         UpdateWords.save()
         DBusr.wD = 0
         DBusr.bD = 0
+
+    DBusr = UpdateUser(DBusr, msg)
 
     DBusr.save()
     
@@ -176,18 +179,51 @@ async def TextMessageProc(msg: types.Message):
                 
                 print("\n#----------Статистика------------------------------------------------------\n")
 
-                """
+                tm = time.time()
 
-                if re.search(r"месяц", text) is not None:
-                    await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, за месяц ты сказал(-а) {    DBusr.wM } слов(матерных кста { DBusr.bM }).")
-                elif re.search(r"неделю", text) is not None:
-                    await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, за неделю ты сказал(-а) {   DBusr.wW } слов(матерных кста { DBusr.bW }).")
-                elif re.search(r"день", text) is not None:
-                    await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, за день ты сказал(-а) {     DBusr.wD } слов(матерных кста { DBusr.bD }).")
-                else:
-                    await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, за всё время ты сказал(-а) {DBusr.wA } слов(матерных кста { DBusr.bA }).")
-            
-                """
+                Stat = WordsPerDay.select().where(WordsPerDay.ChatID==msg.chat.id, WordsPerDay.Usr==DBusr).order_by(WordsPerDay.Day)
+
+                YplotW = []
+                YplotB = []
+                Xplot  = []
+
+                for i in Stat:
+                    YplotW.append(i.Words)
+                    YplotB.append(i.BadWords)
+                    Xplot.append(f"{str(i.Day.month)}.{i.Day.day}")
+
+                print(YplotW, YplotB, Xplot)
+
+                plt.plot(Xplot, YplotB, Xplot, YplotW)
+                plt.ylabel("Количевство слов")
+                plt.xlabel("Время")
+                plt.savefig(f"StatPlot/StPl{tm}.jpg")
+
+                WordsM = 0
+                WordsW = 0
+                BadWordsM = 0
+                BadWordsW = 0
+
+                p = 0
+                l = min(len(Xplot), 30)
+
+                for i in range(l):
+                    
+                    if i < 6:
+                        WordsW += YplotW[i]
+                        BadWordsW += YplotB[i]
+                    
+                    WordsW += YplotW[i]
+                    BadWordsW += YplotB[i]
+
+                t = f"\
+                Статистика пользователя <a href='tg://user?id={ DBusr.TgID }'>{DBusr.FrstName}</a>\
+                \nСлов за день: {DBusr.wD}, матов: {DBusr.bD}\
+                \nСлов за неделю: { WordsW }, матов: { BadWordsW }\
+                \nСлов за месяц: { WordsM }, матов: { BadWordsM }\
+                \nСлов за всё время: { DBusr.wA }, матов: { DBusr.bA }."
+
+                await bot.send_photo(msg.chat.id, photo=open(f"StatPlot/StPl{tm}.jpg", "rb"), caption=t, parse_mode=types.ParseMode.HTML)
 
                 print("\n#--------------------------------------------------------------------------\n")
 
