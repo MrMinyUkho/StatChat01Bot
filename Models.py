@@ -35,7 +35,7 @@ class User(BaseModel):
     bA      = db.IntegerField(null=False,   default=0) # Bad words in all
 
     dickl   = db.IntegerField()
-    dicku   = db.IntegerField()
+    dicku   = db.DateField()
 
     class Meta:
         table_name = "Users"

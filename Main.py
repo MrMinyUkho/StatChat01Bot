@@ -46,8 +46,8 @@ async def TextMessageProc(msg: types.Message):
     
     DBusr = User.get_or_none(User.TgID == msg["from"]["id"], User.ChatID == msg.chat.id)
 
+    nowUpdate = datetime.date.today()
     lstUpdate = DBusr.lstup
-    nowUpdate = datetime.datetime.now()
 
     if msg.content_type == 'voice':
         nowTime = time.time()
@@ -59,13 +59,13 @@ async def TextMessageProc(msg: types.Message):
     
     wrds = BadWordsCount(text)
 
-    DBusr.wD += wrds[1]
     DBusr.bD += wrds[0]
+    DBusr.wD += wrds[1]
 
-    DBusr.wA += wrds[1]
     DBusr.bA += wrds[0]
+    DBusr.wA += wrds[1]
 
-    DBusr.lstup = datetime.date.today()
+    DBusr.lstup = nowUpdate
     
     if nowUpdate.day - lstUpdate.day != 0:
         UpdateWords = WordsPerDay(ChatID=msg.chat.id, Usr=DBusr, Day=DBusr.lstup, Words=DBusr.wD, BadWords=DBusr.bD)
@@ -74,15 +74,15 @@ async def TextMessageProc(msg: types.Message):
         DBusr.bD = 0
 
     DBusr.save()
-
-    if msg.chat.type == "private":
-        await msg.reply(open("Help.txt", "r").read())
     
     if len(text) != 0:
 
         if text == "/help@StatChat01bot":
             helpMessage = open("Help.txt", "r").read()
             await bot.send_message(msg.chat.id, helpMessage)
+        elif text == "/start":
+            await bot.reply("Для полноценной работы добавтье этого бота в группу и разрешите доступ к сообщениям")
+
 
         if re.match(r"бот|скайнет|бомж", text.lower()) is not None:
             text = "".join(re.split(r"бот|скайнет|бомж", text.lower(), maxsplit=1)).strip()
@@ -104,28 +104,27 @@ async def TextMessageProc(msg: types.Message):
             elif re.match(r"(пэсюн|хуй)", text) is not None:
 
                 print("\n#--------Выростить писюн--------------------------------------------------\n")
-                
-                """
 
                 ri = choice([-5,-4,-3,-2,-1, 1, 2, 3, 4, 5 , 6, 7, 8, 9, 10])
-                if DBusr.dicku != nowUpdate.tm_yday:
+                recent_time = datetime.time(hour=23-datetime.datetime.now().hour, minute=60-datetime.datetime.now().minute)
+                if DBusr.dicku != datetime.date.today():
+
+
                     if DBusr.dickl is None:
                         ri = choice([1, 2, 3, 4, 5 , 6, 7, 8, 9, 10])
-                        await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, добро пожаловать в игру пэсюн!\nТвой песюн уже вырос на { ri } см.\nПродолжай играть через { 24 - nowUpdate.tm_hour} ч. и { 60 - nowUpdate.tm_min } мин.\nХорошего дня)", reply_to_message_id=msg.message_id)
+                        await msg.reply(f"{ DBusr.FrstName }, добро пожаловать в игру пэсюн!\nТвой песюн уже вырос на { ri } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
                         DBusr.dickl = 0
                     else:
                         if ri > 0:
-                            await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, твой песюн вырос на { ri } см.\nПродолжай играть через { 24 - nowUpdate.tm_hour} ч. и { 60 - nowUpdate.tm_min } мин.\nХорошего дня)", reply_to_message_id=msg.message_id)
+                            await msg.reply(f"{ DBusr.FrstName }, твой песюн вырос на { ri } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
                         else:
-                            await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, твой песюн уменьшился на { abs(ri) } см.\nПродолжай играть через { 24 - nowUpdate.tm_hour} ч. и { 60 - nowUpdate.tm_min } мин.\nХай щастыть наступного разу)", reply_to_message_id=msg.message_id)
-                    DBusr.dicku = nowUpdate.tm_yday
+                            await msg.reply(f"{ DBusr.FrstName }, твой песюн уменьшился на { abs(ri) } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХай щастыть наступного разу)")
+                    DBusr.dicku = datetime.date.today()
                     DBusr.dickl += ri
                 else:
-                    await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, ты уже сегодня играл, жду тебя через { 24 - nowUpdate.tm_hour} ч. и { 60 - nowUpdate.tm_min } мин.\nХорошего дня)", reply_to_message_id=msg.message_id)
+                    await msg.reply(f"{ DBusr.FrstName }, ты уже сегодня играл, жду тебя через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
 
                 DBusr.save()
-
-                """
 
                 print("\n#--------------------------------------------------------------------------\n")
 
