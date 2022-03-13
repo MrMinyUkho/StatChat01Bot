@@ -46,43 +46,33 @@ async def TextMessageProc(msg: types.Message):
     
     DBusr = User.get_or_none(User.TgID == msg["from"]["id"], User.ChatID == msg.chat.id)
 
-    
-    lstUpdate = time.gmtime(DBusr.lstup)
-    nowUpdate = time.gmtime(time.time())
-    nowTime   = time.time()
+    lstUpdate = DBusr.lstup
+    nowUpdate = datetime.datetime.now()
 
     if msg.content_type == 'voice':
+        nowTime = time.time()
         await msg.voice.download(f"AudioFile/{nowTime}.ogg")
         text = SoundProc(f"AudioFile/{nowTime}.ogg")
         await bot.send_message(msg.chat.id, text)
     else:
         text = msg.text if msg.content_type == 'text' else msg.caption
+    
     wrds = BadWordsCount(text)
-    
-    
+
     DBusr.wD += wrds[1]
     DBusr.bD += wrds[0]
-    DBusr.wW += wrds[1]
-    DBusr.bW += wrds[0]
-    DBusr.wM += wrds[1]
-    DBusr.bM += wrds[0]
+
     DBusr.wA += wrds[1]
     DBusr.bA += wrds[0]
 
-    if lstUpdate.tm_mon       != nowUpdate.tm_mon:
-        DBusr.wM = 0
-        DBusr.bM = 0
-
-    if lstUpdate.tm_yday // 7 != nowUpdate.tm_yday // 7:
-        DBusr.wW = 0
-        DBusr.bW = 0
-
-    if lstUpdate.tm_yday      != nowUpdate.tm_yday:
+    DBusr.lstup = datetime.date.today()
+    
+    if nowUpdate.day - lstUpdate.day != 0:
+        UpdateWords = WordsPerDay(ChatID=msg.chat.id, Usr=DBusr, Day=DBusr.lstup, Words=DBusr.wD, BadWords=DBusr.bD)
+        UpdateWords.save()
         DBusr.wD = 0
         DBusr.bD = 0
 
-
-    DBusr.lstup = time.time()
     DBusr.save()
 
     if msg.chat.type == "private":
@@ -115,6 +105,8 @@ async def TextMessageProc(msg: types.Message):
 
                 print("\n#--------Выростить писюн--------------------------------------------------\n")
                 
+                """
+
                 ri = choice([-5,-4,-3,-2,-1, 1, 2, 3, 4, 5 , 6, 7, 8, 9, 10])
                 if DBusr.dicku != nowUpdate.tm_yday:
                     if DBusr.dickl is None:
@@ -132,6 +124,8 @@ async def TextMessageProc(msg: types.Message):
                     await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, ты уже сегодня играл, жду тебя через { 24 - nowUpdate.tm_hour} ч. и { 60 - nowUpdate.tm_min } мин.\nХорошего дня)", reply_to_message_id=msg.message_id)
 
                 DBusr.save()
+
+                """
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -183,7 +177,9 @@ async def TextMessageProc(msg: types.Message):
                 
                 print("\n#----------Статистика------------------------------------------------------\n")
 
-                if   re.search(r"месяц", text) is not None:
+                """
+
+                if re.search(r"месяц", text) is not None:
                     await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, за месяц ты сказал(-а) {    DBusr.wM } слов(матерных кста { DBusr.bM }).")
                 elif re.search(r"неделю", text) is not None:
                     await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, за неделю ты сказал(-а) {   DBusr.wW } слов(матерных кста { DBusr.bW }).")
@@ -192,11 +188,15 @@ async def TextMessageProc(msg: types.Message):
                 else:
                     await bot.send_message(msg.chat.id, f"{ DBusr.FrstName }, за всё время ты сказал(-а) {DBusr.wA } слов(матерных кста { DBusr.bA }).")
             
+                """
+
                 print("\n#--------------------------------------------------------------------------\n")
 
             elif re.match(r"стата|статистика", text) is not None:
 
                 print("\n#--------------Статистика чата----------------------------------------------\n")
+
+                """
 
                 f = []
                 ft = ""
@@ -233,6 +233,8 @@ async def TextMessageProc(msg: types.Message):
                     p += 1
 
                 await bot.send_message(msg.chat.id, txt, parse_mode=types.ParseMode.HTML)
+                
+                """
 
                 print("\n#--------------------------------------------------------------------------\n")
 

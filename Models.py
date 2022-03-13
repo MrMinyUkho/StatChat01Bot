@@ -1,5 +1,6 @@
 import peewee as db
 import time
+import datetime
 
 DB = db.SqliteDatabase('BotDataBase.sqlite')
 DB.connect()
@@ -16,30 +17,22 @@ class User(BaseModel):
     ChatID  = db.IntegerField(null=False)
     TgID    = db.IntegerField(null=False)
     FrstName= db.TextField(null=False)
-    UsrStat = db.TextField(null=False,  default="user")
-
+    UsrStat = db.TextField(null=False,      default="user")
     UserName= db.TextField()
+    lstup   = db.DateTimeField(null=False,   default=datetime.datetime.now())
 
-    lstup   = db.IntegerField(null=False, default=time.time())
+    # Mute (Not used)
 
-    # Mute
-
-    IsMuted = db.IntegerField(null=False,  default=0)
-    MuteTime= db.IntegerField(null=False,  default=0)
+    IsMuted = db.IntegerField(null=False,   default=0)
+    MuteTime= db.IntegerField(null=False,   default=0)
     
     # Words counter
 
-    wD      = db.IntegerField(null=False,  default=0) # Words per day
-    bD      = db.IntegerField(null=False,  default=0) # Bad words per day
+    wD      = db.IntegerField(null=False,   default=0) # Words per day
+    bD      = db.IntegerField(null=False,   default=0) # Bad words per day
 
-    wW      = db.IntegerField(null=False,  default=0) # Words per week
-    bW      = db.IntegerField(null=False,  default=0) # Bad words per week
-
-    wM      = db.IntegerField(null=False,  default=0) # Words per months
-    bM      = db.IntegerField(null=False,  default=0) # Bad words per months
-
-    wA      = db.IntegerField(null=False,  default=0) # Words in all
-    bA      = db.IntegerField(null=False,  default=0) # Bad words in all
+    wA      = db.IntegerField(null=False,   default=0) # Words in all
+    bA      = db.IntegerField(null=False,   default=0) # Bad words in all
 
     dickl   = db.IntegerField()
     dicku   = db.IntegerField()
@@ -49,16 +42,37 @@ class User(BaseModel):
 
 class Married(BaseModel):
 
-    id = db.PrimaryKeyField()
-    Usr1 = db.ForeignKeyField(User)
-    Usr2 = db.ForeignKeyField(User)
-    Time = db.DateField(null=False)
-    ChatID = db.IntegerField(null=False)
+    id       = db.PrimaryKeyField()
+    
+    Usr1     = db.ForeignKeyField(User)
+    Usr2     = db.ForeignKeyField(User)
+    
+    Time     = db.DateField(null=False)
+    
+    ChatID   = db.IntegerField(null=False)
 
     class Meta:
         table_name = "Married"
+
+class WordsPerDay(BaseModel):
+
+    id       = db.PrimaryKeyField()
+
+    Usr      = db.ForeignKeyField(User)
+    ChatID   = db.IntegerField(null=False)
+
+    Day      = db.DateField(null=False)
+
+    Words    = db.IntegerField(null=False)
+    BadWords = db.IntegerField(null=False)
+
+    class Meta:
+        table_name = "WordsPerDay"
+            
 
 if DB.table_exists("Users") is not True:
     User.create_table()
 if DB.table_exists("Married") is not True:
     Married.create_table()
+if DB.table_exists("WordsPerDay") is not True:
+    WordsPerDay.create_table()
