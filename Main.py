@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import speech_recognition as sr
 from Func import *
 from random import choice
-from Models import User, Married, WordsPerDay
+from Models import User, Married, WordsPerDay, Chat
 from PIL import Image, ImageDraw, ImageFont
 from aiogram import Bot, Dispatcher, executor, types
 
@@ -35,18 +35,17 @@ r   = sr.Recognizer()
 @dp.message_handler(content_types='any')
 async def TextMessageProc(msg: types.Message):
 
-    # Get User from database
+    DBchat = Chat.get_or_none(Chat.cID==msg.chat.id)
+    if DBchat is None:
+        DBchat = Chat(cID = msg.chat.id, ChatName=msg.chat.title)
+        DBchat.save()
 
-    DBusr = User.get_or_none(User.TgID == msg.from_user.id, User.ChatID == msg.chat.id)
-    
-    msgTime = time.time()
-    print(DBusr)
+
+    DBusr = User.get_or_none(User.TgID == msg.from_user.id, User.chat_id == DBchat)
     if DBusr is None:
-        DBusr = User(ChatID=msg.chat.id, TgID=msg["from"]["id"], UserName=msg["from"]["username"], FrstName=msg["from"]["first_name"], lstup=datetime.date.today())
+        DBusr = User(chat_id = DBchat, TgID=msg["from"]["id"], UserName=msg["from"]["username"], FrstName=msg["from"]["first_name"], lstup=datetime.date.today())
         DBusr.save()
     
-    DBusr = User.get_or_none(User.TgID == msg["from"]["id"], User.ChatID == msg.chat.id)
-
     nowUpdate = datetime.date.today()
     lstUpdate = DBusr.lstup
 
@@ -69,23 +68,21 @@ async def TextMessageProc(msg: types.Message):
     DBusr.lstup = nowUpdate
     
     if nowUpdate.day - lstUpdate.day != 0:
-        UpdateWords = WordsPerDay(ChatID=msg.chat.id, Usr=DBusr, Day=DBusr.lstup, Words=DBusr.wD, BadWords=DBusr.bD)
+        UpdateWords = WordsPerDay(chat_id=DBchat, Usr=DBusr, Day=DBusr.lstup, Words=DBusr.wD, BadWords=DBusr.bD)
         UpdateWords.save()
         DBusr.wD = 0
         DBusr.bD = 0
 
     DBusr = UpdateUser(DBusr, msg)
-
     DBusr.save()
     
     if len(text) != 0:
 
         if text == "/help@StatChat01bot":
             helpMessage = open("Help.txt", "r").read()
-            await bot.send_message(msg.chat.id, helpMessage)
-        elif text == "/start":
+            await bot.send_message(DBchat.cID, helpMessage)
+        elif text in ["/start", "/help"]:
             await bot.reply("Для полноценной работы добавтье этого бота в группу и разрешите доступ к сообщениям")
-
 
         if re.match(r"бот|скайнет|бомж", text.lower()) is not None:
             text = "".join(re.split(r"бот|скайнет|бомж", text.lower(), maxsplit=1)).strip()
@@ -98,9 +95,9 @@ async def TextMessageProc(msg: types.Message):
 
                 resp = wikipedia.search(re.split(r'(расскажи|что(\sты\s|\s)знаешь) (о|про)\s', text.lower(), maxsplit=1)[-1])
                 if resp == []:
-                    await bot.send_message(msg.chat.id, "Либо я тупой, а я не тупой, либо ты чёто не то спрашиваешь")
+                    await bot.send_message(DBchat.cID, "Либо я тупой, а я не тупой, либо ты чёто не то спрашиваешь")
                 else:
-                    await bot.send_message(msg.chat.id, wikipedia.summary(resp[0]))
+                    await bot.send_message(DBchat.cID, wikipedia.summary(resp[0]))
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -135,14 +132,14 @@ async def TextMessageProc(msg: types.Message):
 
                 print("\n#----------Список писюнов-------------------------------------------------\n")
 
-                users = User.select().where(User.ChatID == msg.chat.id).order_by(User.dickl)
+                users = User.select().where(User.chat_id == DBchat.cID).order_by(User.dickl)
                 p = 1
                 txt = "Топ пэсюнов в чате:\n"
                 for i in users[::-1]:
                     if i.dickl is not None:
                         txt += f"{p}. <a href='tg://user?id={ i.TgID }'>{i.FrstName}</a> - {i.dickl} см.\n"
                         p += 1
-                await bot.send_message(msg.chat.id, txt, parse_mode=types.ParseMode.HTML)
+                await bot.send_message(DBchat.cID, txt, parse_mode=types.ParseMode.HTML)
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -151,7 +148,7 @@ async def TextMessageProc(msg: types.Message):
                 print("\n#----------Загрузка пк-----------------------------------------------------\n")
 
                 if os.name == "posix":
-                    await bot.send_message(msg.chat.id, f"Загрузка CPU: {CPULoad()}%\nЗагрузка RAM: { RAMLoad() }")
+                    await bot.send_message(DBchat.cID, f"Загрузка CPU: {CPULoad()}%\nЗагрузка RAM: { RAMLoad() }")
                 else:
                     await bot.reply("Система на которой запущен бот не является GNU/Linux выполнение команды невозможно(")
 
@@ -171,7 +168,7 @@ async def TextMessageProc(msg: types.Message):
                 print(("".join(re.split(r"фото|ржака|мем", text)).strip()))
 
                 ImgProc(f"Photo/{ t }-rz.jpg", f"PhotoOut/{ t }-rzf.jpg", "".join(re.split(r"фото|ржака|мем", text)).strip())
-                await bot.send_photo(chat_id=msg.chat.id, photo=open(f'PhotoOut/{ t }-rzf.jpg', 'rb'))
+                await bot.send_photo(chat_id=DBchat.cID, photo=open(f'PhotoOut/{ t }-rzf.jpg', 'rb'))
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -181,7 +178,7 @@ async def TextMessageProc(msg: types.Message):
 
                 tm = time.time()
 
-                Stat = WordsPerDay.select().where(WordsPerDay.ChatID==msg.chat.id, WordsPerDay.Usr==DBusr).order_by(WordsPerDay.Day)
+                Stat = WordsPerDay.select().where(WordsPerDay.chat_id==DBchat, WordsPerDay.Usr==DBusr).order_by(WordsPerDay.Day)
 
                 YplotW = []
                 YplotB = []
@@ -190,7 +187,7 @@ async def TextMessageProc(msg: types.Message):
                 for i in Stat:
                     YplotW.append(i.Words)
                     YplotB.append(i.BadWords)
-                    Xplot.append(f"{str(i.Day.month)}.{i.Day.day}")
+                    Xplot.append(f"{i.Day.day}.{str(i.Day.month)}")
 
                 print(YplotW, YplotB, Xplot)
 
@@ -231,24 +228,16 @@ async def TextMessageProc(msg: types.Message):
 
                 print("\n#--------------Статистика чата----------------------------------------------\n")
 
-                """
-
                 f = []
                 ft = ""
                 if   text.lower().find("месяц")     != -1:
                     f = User.wM
                     ft = "месяц"
-                elif text.lower().find("неделю")    != -1:
-                    f = User.wW
-                    ft = "неделю"
-                elif text.lower().find("день")      != -1:
-                    f = User.wD
-                    ft = "день"
                 else:
                     f = User.wA
                     ft = "всё время"
 
-                users = User.select().where(User.ChatID == msg.chat.id).order_by(f)
+                users = User.select().where(User.chat_id == DBchat).order_by(f)
 
                 p = 1
 
@@ -256,20 +245,14 @@ async def TextMessageProc(msg: types.Message):
 
                 for i in users[::-1]:
                     txt += f"{p}. <a href='tg://user?id={ i.TgID }'>{i.FrstName}</a> - "
-                    if text.lower().find("месяц") != -1:
-                        txt += str(i.wM)
-                    elif text.lower().find("неделю") != -1:
-                        txt += str(i.wW)
-                    elif text.lower().find("день") != -1:
+                    if text.lower().find("день") != -1:
                         txt += str(i.wD)
                     else:
                         txt += str(i.wA)
                     txt += f" слов.\n"
                     p += 1
 
-                await bot.send_message(msg.chat.id, txt, parse_mode=types.ParseMode.HTML)
-                
-                """
+                await bot.send_message(DBchat.cID, txt, parse_mode=types.ParseMode.HTML)
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -277,11 +260,11 @@ async def TextMessageProc(msg: types.Message):
 
                 print("\n#-------------Общий сбор--------------------------------------------------\n")
 
-                users = User.select().where(User.ChatID == msg.chat.id)
+                users = User.select().where(User.chat_id == DBchat)
                 t = f"Общий сбор! Он был объявлен <a href='tg://user?id={ DBusr.TgID }'>{ DBusr.FrstName}</a>. Если вас разбудили\nсори"
                 for i in users:
                     t += f"<a href='tg://user?id={ i.TgID }'>&#160</a>"
-                await bot.send_message(msg.chat.id, t, parse_mode=types.ParseMode.HTML) 
+                await bot.send_message(DBchat.cID, t, parse_mode=types.ParseMode.HTML) 
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -289,15 +272,14 @@ async def TextMessageProc(msg: types.Message):
                 
                 print("\n#--------Вывод списка браков-----------------------------------------------\n")
                 
-                Mar = Married.select().where(Married.ChatID == msg.chat.id)
-                for i in Mar:
-                    print(i)
+                Mar = Married.select().where(Married.chat_id == DBchat)
                 t = "💍 БРАКИ ЭТОЙ БЕСЕДЫ\n\n"
                 p = 1
                 if Mar != []:
                     for i in Mar:
                         q = datetime.date.today() - i.Time
-                        t += f"{p}. <a href='tg://user?id={ i.Usr1.TgID }'>{ i.Usr1.FrstName }</a> + <a href='tg://user?id={ i.Usr2.TgID }'>{ i.Usr2.FrstName }</a>({ q.days // 30 } м. { q.days } дн.)\n" 
+                        print(datetime.date.today(), "-", i.Time, "=", q)
+                        t += f"{p}. <a href='tg://user?id={ i.Usr1.TgID }'>{ i.Usr1.FrstName }</a> + <a href='tg://user?id={ i.Usr2.TgID }'>{ i.Usr2.FrstName }</a>({ q.days // 30 } м. { q.days % 30} дн.)\n" 
                         p += 1
                 t+="\n💬 Чтобы вступить в брак с участником беседы, введите команду \"бот брак @ссылка\""
                 await msg.reply(t, parse_mode=types.ParseMode.HTML)
@@ -311,7 +293,7 @@ async def TextMessageProc(msg: types.Message):
                 print("\n#-------------------Предложение руки и сердца------------------------------\n")
 
 
-                if get_marry(DBusr, msg.chat.id) is not None:
+                if get_marry(DBusr, DBchat) is not None:
                     await msg.reply("Мм... ты же уже в браке...")
                 else:
                     text = msg.text.split()
@@ -322,7 +304,7 @@ async def TextMessageProc(msg: types.Message):
                     if username == "":
                         await msg.reply("Мм... а с кем свадьба?")
                     else:
-                        users = User.get_or_none(User.ChatID == msg.chat.id, User.UserName == username)
+                        users = User.get_or_none(User.chat_id == DBchat, User.UserName == username)
                         if users == None:
                             await msg.reply("Мм... хто цэ?")
                         else:
@@ -341,7 +323,7 @@ async def TextMessageProc(msg: types.Message):
 
                 print("\n#--------------------------Развод-------------------------------------------\n")
 
-                marry = get_marry(DBusr, msg.chat.id)
+                marry = get_marry(DBusr, DBchat)
                 if marry is not None:
                     await msg.reply(f"<a href='tg://user?id={ DBusr.TgID }'>{DBusr.FrstName}</a>, вы рассторгли свой брак, который продлился { marry.Time.days } дней.", parse_mode=types.ParseMode.HTML)
                     marry.delete_instance()
@@ -351,12 +333,19 @@ async def TextMessageProc(msg: types.Message):
 
                 print("\n#----------------------Информация о браке------------------------------------\n")
 
-                marry = get_marry(DBusr, msg.chat.id)
+                marry = get_marry(DBusr, DBchat)
 
                 if marry is None:
-                    await bot.reply("Ты не состоишь в браке")
+                    await msg.reply("Ты не состоишь в браке")
                 else:
-                    await bot.send_photo(msg.chat.id, photo=open(f"Cert/Marry{marry.id}.jpg", "rb"))
+                    pho = ""
+                    try:
+                        pho = open(f"Cert/Marry{marry.id}.jpg", "rb")
+                    except Exception as e:
+                        createCert(marry.Usr2.FrstName, marry.Usr1.FrstName, marry.Time, marry.id)
+                        pho = open(f"Cert/Marry{marry.id}.jpg", "rb")
+
+                    await bot.send_photo(DBchat.cID, photo=pho)
 
 
 @dp.callback_query_handler()
@@ -366,17 +355,19 @@ async def process_callback_kb1btn1(callback_query: types.CallbackQuery):
     data = cbqr.data.split("|")
     
     UserFrom = cbqr["from"]["username"]
-    DBusr = User.get(User.UserName == UserFrom, User.ChatID == cbqr.message.chat.id)
+    DBchat = Chat.get_or_none(Chat.cID==cbqr.message.chat.id)
+    DBusr = User.get(User.UserName == UserFrom, User.chat_id == DBchat)
+
     
     if data[0] == "marry" and UserFrom == data[2]:
-        if get_marry(DBusr, cbqr.message.chat.id) is None:
-            userWith = User.get(User.UserName == data[1], User.ChatID == cbqr.message.chat.id)
-            Marry = Married(Usr1=DBusr, Usr2=userWith, Time=datetime.date.today(), ChatID=cbqr.message.chat.id)
+        if get_marry(DBusr, DBchat) is None:
+            userWith = User.get(User.UserName == data[1], User.chat_id == DBchat)
+            Marry = Married(Usr1=DBusr, Usr2=userWith, Time=datetime.date.today(), chat_id=DBchat)
             Marry.save()
             createCert(DBusr.FrstName, userWith.FrstName, Marry.Time, Marry.id)
-            await bot.send_photo(cbqr.message.chat.id, photo=open(f"Cert/Marry{Marry.id}.jpg", "rb"), caption="Поздравим же новоиспечённую пару с началом их супружеской жизни!!!")
+            await bot.send_photo(DBchat.cID, photo=open(f"Cert/Marry{Marry.id}.jpg", "rb"), caption="Поздравим же новоиспечённую пару с началом их супружеской жизни!!!")
             
-            await bot.delete_message(cbqr.message.chat.id, cbqr.message.message_id)
+            await bot.delete_message(DBchat.cID, cbqr.message.message_id)
 
     elif data[0] == "marryno" and UserFrom == data[2]:
         await bot.send_message(cbqr.message.chat.id, f"@{data[1]}, ну, не судьба, повезёт в другой раз(")

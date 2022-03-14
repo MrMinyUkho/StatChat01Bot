@@ -9,22 +9,29 @@ class BaseModel(db.Model):
     class Meta:
         database = DB
 
+class Chat(BaseModel):
+    id       = db.PrimaryKeyField()
+    cID       = db.IntegerField(null=False)
+    
+    ChatName = db.TextField()
+
+    MaxViewStat = db.IntegerField(null=False, default=15)
+
+
+    class Meta:
+        table_name = "Chat"
+
 class User(BaseModel):
     
     # Base variables
 
     id      = db.PrimaryKeyField()
-    ChatID  = db.IntegerField(null=False)
+    chat_id    = db.ForeignKeyField(Chat)
     TgID    = db.IntegerField(null=False)
     FrstName= db.TextField(null=False)
     UsrStat = db.TextField(null=False,      default="user")
     UserName= db.TextField()
     lstup   = db.DateTimeField(null=False,   default=datetime.datetime.now())
-
-    # Mute (Not used)
-
-    IsMuted = db.IntegerField(null=False,   default=0)
-    MuteTime= db.IntegerField(null=False,   default=0)
     
     # Words counter
 
@@ -49,17 +56,17 @@ class Married(BaseModel):
     
     Time     = db.DateField(null=False)
     
-    ChatID   = db.IntegerField(null=False)
+    chat_id     = db.ForeignKeyField(Chat, null=False)
 
     class Meta:
         table_name = "Married"
 
 class WordsPerDay(BaseModel):
 
-    id       = db.PrimaryKeyField()
+    chat_id       = db.PrimaryKeyField()
 
     Usr      = db.ForeignKeyField(User)
-    ChatID   = db.IntegerField(null=False)
+    chat_id     = db.ForeignKeyField(Chat)
 
     Day      = db.DateField(null=False)
 
@@ -69,7 +76,8 @@ class WordsPerDay(BaseModel):
     class Meta:
         table_name = "WordsPerDay"
             
-
+if DB.table_exists("Chat") is not True:
+    Chat.create_table()
 if DB.table_exists("Users") is not True:
     User.create_table()
 if DB.table_exists("Married") is not True:

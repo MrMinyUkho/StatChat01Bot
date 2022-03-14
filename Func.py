@@ -3,6 +3,7 @@ import time
 import soundfile as sf
 import speech_recognition as sr
 from PIL import Image, ImageDraw, ImageFont
+from Models import Married
 
 r   = sr.Recognizer()
 
@@ -91,8 +92,8 @@ def RAMLoad():
         return str(Used + "MB/" + Total + "MB")
 
 def get_marry(Usr, chat):
-    a = Married.get_or_none(Married.Usr1 == Usr.id, Married.ChatID==chat)
-    b = Married.get_or_none(Married.Usr2 == Usr.id, Married.ChatID==chat)
+    a = Married.get_or_none(Married.Usr1 == Usr.id, Married.chat_id==chat)
+    b = Married.get_or_none(Married.Usr2 == Usr.id, Married.chat_id==chat)
 
 
     if a is not None:
