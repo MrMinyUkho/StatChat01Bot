@@ -24,7 +24,7 @@ except Exception:
 
 # Bot
 
-bot = Bot(config.TOKEN)
+bot = Bot(config.TOKEN, parse_mode=types.ParseMode.HTML)
 dp = Dispatcher(bot)
 
 # Wikipedia settings
@@ -139,7 +139,7 @@ async def TextMessageProc(msg: types.Message):
                     if i.dickl is not None:
                         txt += f"{p}. { UserLink(i) } - {i.dickl} см.\n"
                         p += 1
-                await bot.send_message(DBchat.cID, txt, parse_mode=types.ParseMode.HTML)
+                await bot.send_message(DBchat.cID, txt)
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -221,7 +221,7 @@ async def TextMessageProc(msg: types.Message):
                 \nСлов за месяц: { WordsM }, матов: { BadWordsM }\
                 \nСлов за всё время: { DBusr.wA }, матов: { DBusr.bA }."
 
-                await bot.send_photo(msg.chat.id, photo=open(f"StatPlot/StPl{tm}.jpg", "rb"), caption=t, parse_mode=types.ParseMode.HTML)
+                await bot.send_photo(msg.chat.id, photo=open(f"StatPlot/StPl{tm}.jpg", "rb"), caption=t)
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -253,7 +253,7 @@ async def TextMessageProc(msg: types.Message):
                     txt += f" слов.\n"
                     p += 1
 
-                await bot.send_message(DBchat.cID, txt, parse_mode=types.ParseMode.HTML)
+                await bot.send_message(DBchat.cID, txt)
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -265,7 +265,7 @@ async def TextMessageProc(msg: types.Message):
                 t = f"Общий сбор! Он был объявлен <a href='tg://user?id={ DBusr.TgID }'>{ DBusr.FrstName}</a>. Если вас разбудили\nсори"
                 for i in users:
                     t += f"{ UserLink(ID=i.TgID, Name='&#160') }"
-                await bot.send_message(DBchat.cID, t, parse_mode=types.ParseMode.HTML) 
+                await bot.send_message(DBchat.cID, t) 
 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -283,7 +283,7 @@ async def TextMessageProc(msg: types.Message):
                         t += f"{p}. { UserLink(i.Usr1) } + { UserLink(i.Usr2) }({ q.days // 30 } м. { q.days % 30} дн.)\n" 
                         p += 1
                 t+="\n💬 Чтобы вступить в брак с участником беседы, введите команду \"бот брак @ссылка\""
-                await msg.reply(t, parse_mode=types.ParseMode.HTML)
+                await msg.reply(t)
                 
                 print("\n#--------------------------------------------------------------------------\n")
 
@@ -314,7 +314,7 @@ async def TextMessageProc(msg: types.Message):
                                 BtnYes = types.InlineKeyboardButton('Принять', callback_data=f'marry|{msg["from"]["username"]}|{username}')
                                 BtnNo  = types.InlineKeyboardButton('Отклонить', callback_data=f'marryno|{msg["from"]["username"]}|{username}')
                                 MarryKB =types.InlineKeyboardMarkup(row_width=2).row(BtnYes, BtnNo)
-                                await msg.reply(f"{ UserLink(users) }, согласен(а) ли ты заключить брак с { UserLink(DBusr) }?", reply_markup=MarryKB, parse_mode=types.ParseMode.HTML)
+                                await msg.reply(f"{ UserLink(users) }, согласен(а) ли ты заключить брак с { UserLink(DBusr) }?", reply_markup=MarryKB)
                             else:
                                 await msg.reply("Этот человек уже состоит в браке")
 
@@ -326,7 +326,7 @@ async def TextMessageProc(msg: types.Message):
 
                 marry = get_marry(DBusr, DBchat)
                 if marry is not None:
-                    await msg.reply(f"{ UserLink(DBusr) }, вы рассторгли свой брак, который продлился { marry.Time.days } дней.", parse_mode=types.ParseMode.HTML)
+                    await msg.reply(f"{ UserLink(DBusr) }, вы рассторгли свой брак, который продлился { marry.Time.days } дней.")
                     marry.delete_instance()
                 else:
                     await msg.reply("С кем разводиться собрался(-ась)?")
