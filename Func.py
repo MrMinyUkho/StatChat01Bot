@@ -4,6 +4,7 @@ import soundfile as sf
 import speech_recognition as sr
 from PIL import Image, ImageDraw, ImageFont
 from Models import Married
+from Models import User as UserFdb
 
 r   = sr.Recognizer()
 
@@ -116,3 +117,13 @@ def createCert(Name1, Name2, date, marryID):
     draw.text((360, 395), str(Name2), fill="white", anchor="mm", font=font)
     draw.text((590, 520), str(date.day)+" "+str(date.month)+" "+str(date.year), fill="white", anchor="mm", font=font)
     CertBase.save(f"Cert/Marry{marryID}.jpg")
+
+def UserLink(User=None, Name=None, ID=None):
+    if Name == None or ID == None:
+        if User == None:
+            raise ValueError("First name and id does not given")
+        elif str(type(User)) != "<Model: User>":
+            raise TypeError(f"User must be { type(UserFdb) } not { type(User) }") 
+        Name    = User.FrstName
+        ID      = User.TgID
+    return f"<a href='tg://user?id={ ID }'>{ Name }</a>"

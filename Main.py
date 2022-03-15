@@ -112,17 +112,17 @@ async def TextMessageProc(msg: types.Message):
 
                     if DBusr.dickl is None:
                         ri = choice([1, 2, 3, 4, 5 , 6, 7, 8, 9, 10])
-                        await msg.reply(f"{ DBusr.FrstName }, добро пожаловать в игру пэсюн!\nТвой песюн уже вырос на { ri } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
+                        await msg.reply(f"{ UserLink(DBusr) }, добро пожаловать в игру пэсюн!\nТвой песюн уже вырос на { ri } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
                         DBusr.dickl = 0
                     else:
                         if ri > 0:
-                            await msg.reply(f"{ DBusr.FrstName }, твой песюн вырос на { ri } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
+                            await msg.reply(f"{ UserLink(DBusr) }, твой песюн вырос на { ri } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
                         else:
-                            await msg.reply(f"{ DBusr.FrstName }, твой песюн уменьшился на { abs(ri) } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХай щастыть наступного разу)")
+                            await msg.reply(f"{ UserLink(DBusr) }, твой песюн уменьшился на { abs(ri) } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХай щастыть наступного разу)")
                     DBusr.dicku = datetime.date.today()
                     DBusr.dickl += ri
                 else:
-                    await msg.reply(f"{ DBusr.FrstName }, ты уже сегодня играл, жду тебя через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
+                    await msg.reply(f"{ UserLink(DBusr) }, ты уже сегодня играл, жду тебя через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
 
                 DBusr.save()
 
@@ -137,7 +137,7 @@ async def TextMessageProc(msg: types.Message):
                 txt = "Топ пэсюнов в чате:\n"
                 for i in users[::-1]:
                     if i.dickl is not None:
-                        txt += f"{p}. <a href='tg://user?id={ i.TgID }'>{i.FrstName}</a> - {i.dickl} см.\n"
+                        txt += f"{p}. { UserLink(i) } - {i.dickl} см.\n"
                         p += 1
                 await bot.send_message(DBchat.cID, txt, parse_mode=types.ParseMode.HTML)
 
@@ -215,7 +215,7 @@ async def TextMessageProc(msg: types.Message):
                     BadWordsW += YplotB[i]
 
                 t = f"\
-                Статистика пользователя <a href='tg://user?id={ DBusr.TgID }'>{DBusr.FrstName}</a>\
+                Статистика пользователя { UserLink(DBusr) }\
                 \nСлов за день: {DBusr.wD}, матов: {DBusr.bD}\
                 \nСлов за неделю: { WordsW }, матов: { BadWordsW }\
                 \nСлов за месяц: { WordsM }, матов: { BadWordsM }\
@@ -245,7 +245,7 @@ async def TextMessageProc(msg: types.Message):
                 txt = f"Топ болтунов в чате за {ft}:\n"
 
                 for i in users[::-1]:
-                    txt += f"{p}. <a href='tg://user?id={ i.TgID }'>{i.FrstName}</a> - "
+                    txt += f"{p}. { UserLink(i) } - "
                     if text.lower().find("день") != -1:
                         txt += str(i.wD)
                     else:
@@ -264,7 +264,7 @@ async def TextMessageProc(msg: types.Message):
                 users = User.select().where(User.chat_id == DBchat)
                 t = f"Общий сбор! Он был объявлен <a href='tg://user?id={ DBusr.TgID }'>{ DBusr.FrstName}</a>. Если вас разбудили\nсори"
                 for i in users:
-                    t += f"<a href='tg://user?id={ i.TgID }'>&#160</a>"
+                    t += f"{ UserLink(ID=i.TgID, Name='&#160') }"
                 await bot.send_message(DBchat.cID, t, parse_mode=types.ParseMode.HTML) 
 
                 print("\n#--------------------------------------------------------------------------\n")
@@ -280,7 +280,7 @@ async def TextMessageProc(msg: types.Message):
                     for i in Mar:
                         q = datetime.date.today() - i.Time
                         print(datetime.date.today(), "-", i.Time, "=", q)
-                        t += f"{p}. <a href='tg://user?id={ i.Usr1.TgID }'>{ i.Usr1.FrstName }</a> + <a href='tg://user?id={ i.Usr2.TgID }'>{ i.Usr2.FrstName }</a>({ q.days // 30 } м. { q.days % 30} дн.)\n" 
+                        t += f"{p}. { UserLink(i.Usr1) } + { UserLink(i.Usr2) }({ q.days // 30 } м. { q.days % 30} дн.)\n" 
                         p += 1
                 t+="\n💬 Чтобы вступить в брак с участником беседы, введите команду \"бот брак @ссылка\""
                 await msg.reply(t, parse_mode=types.ParseMode.HTML)
@@ -314,7 +314,7 @@ async def TextMessageProc(msg: types.Message):
                                 BtnYes = types.InlineKeyboardButton('Принять', callback_data=f'marry|{msg["from"]["username"]}|{username}')
                                 BtnNo  = types.InlineKeyboardButton('Отклонить', callback_data=f'marryno|{msg["from"]["username"]}|{username}')
                                 MarryKB =types.InlineKeyboardMarkup(row_width=2).row(BtnYes, BtnNo)
-                                await msg.reply(f"<a href='tg://user?id={ users.TgID }'>{users.FrstName}</a>, согласен(а) ли ты заключить брак с {DBusr.FrstName}?", reply_markup=MarryKB, parse_mode=types.ParseMode.HTML)
+                                await msg.reply(f"{ UserLink(users) }, согласен(а) ли ты заключить брак с { UserLink(DBusr) }?", reply_markup=MarryKB, parse_mode=types.ParseMode.HTML)
                             else:
                                 await msg.reply("Этот человек уже состоит в браке")
 
@@ -326,7 +326,7 @@ async def TextMessageProc(msg: types.Message):
 
                 marry = get_marry(DBusr, DBchat)
                 if marry is not None:
-                    await msg.reply(f"<a href='tg://user?id={ DBusr.TgID }'>{DBusr.FrstName}</a>, вы рассторгли свой брак, который продлился { marry.Time.days } дней.", parse_mode=types.ParseMode.HTML)
+                    await msg.reply(f"{ UserLink(DBusr) }, вы рассторгли свой брак, который продлился { marry.Time.days } дней.", parse_mode=types.ParseMode.HTML)
                     marry.delete_instance()
                 else:
                     await msg.reply("С кем разводиться собрался(-ась)?")
