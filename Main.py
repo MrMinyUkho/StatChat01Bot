@@ -65,14 +65,14 @@ async def TextMessageProc(msg: types.Message):
     DBusr.bA += wrds[0]
     DBusr.wA += wrds[1]
 
-    DBusr.lstup = nowUpdate
     
     if nowUpdate.day - lstUpdate.day != 0:
-        UpdateWords = WordsPerDay(chat_id=DBchat, Usr=DBusr, Day=DBusr.lstup, Words=DBusr.wD, BadWords=DBusr.bD)
+        UpdateWords = WordsPerDay(chat_id=DBchat, Usr=DBusr, Day=lstUpdate, Words=DBusr.wD, BadWords=DBusr.bD)
         UpdateWords.save()
         DBusr.wD = 0
         DBusr.bD = 0
 
+    DBusr.lstup = nowUpdate
     DBusr = UpdateUser(DBusr, msg)
     DBusr.save()
     
@@ -106,7 +106,7 @@ async def TextMessageProc(msg: types.Message):
                 print("\n#--------Выростить писюн--------------------------------------------------\n")
 
                 ri = choice([-5,-4,-3,-2,-1, 1, 2, 3, 4, 5 , 6, 7, 8, 9, 10])
-                recent_time = datetime.time(hour=23-datetime.datetime.now().hour, minute=60-datetime.datetime.now().minute)
+                recent_time = datetime.time(hour=23-datetime.datetime.now().hour, minute=59-datetime.datetime.now().minute)
                 if DBusr.dicku != datetime.date.today():
 
 
@@ -132,7 +132,7 @@ async def TextMessageProc(msg: types.Message):
 
                 print("\n#----------Список писюнов-------------------------------------------------\n")
 
-                users = User.select().where(User.chat_id == DBchat.cID).order_by(User.dickl)
+                users = User.select().where(User.chat_id == DBchat).order_by(User.dickl)
                 p = 1
                 txt = "Топ пэсюнов в чате:\n"
                 for i in users[::-1]:
@@ -187,11 +187,12 @@ async def TextMessageProc(msg: types.Message):
                 for i in Stat:
                     YplotW.append(i.Words)
                     YplotB.append(i.BadWords)
-                    Xplot.append(f"{i.Day.day}.{str(i.Day.month)}")
+                    Xplot.append(f"{i.Day.day},{str(i.Day.month)}")
 
                 print(YplotW, YplotB, Xplot)
 
-                plt.plot(Xplot, YplotB, Xplot, YplotW)
+                plt.clf()
+                plt.plot(Xplot, YplotB[::-1], Xplot, YplotW[::-1])
                 plt.ylabel("Количевство слов")
                 plt.xlabel("Время")
                 plt.savefig(f"StatPlot/StPl{tm}.jpg")
