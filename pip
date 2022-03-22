@@ -1,7 +1,0 @@
-SpeechRecognition==3.8.1
-SoundFile==0.10.3.post1
-wikipedia==1.4.0
-matplotlib-3.5.1
-peewee==3.14.9
-aiogram==2.19
-Pillow==9.0.1

@@ -35,17 +35,6 @@ r   = sr.Recognizer()
 @dp.message_handler(content_types='any')
 async def TextMessageProc(msg: types.Message):
 
-    try:
-        if config.S_MSG == True:
-            if msg.chat.id == config.myid:
-                print(f"send to {config.chat}")
-                await bot.send_message(config.chat, msg.text)
-            if msg.chat.id == config.chat:
-                print(f"send to {config.myid}")
-                await bot.send_message(config.myid, msg.text)
-    except BaseException:
-        pass
-
     if msg.chat.id > 0:
         print(f"From user ID:{msg.chat.id}, UserName:{msg['from']['username']}")
     else:
@@ -377,5 +366,3 @@ async def process_callback_kb1btn1(callback_query: types.CallbackQuery):
         await bot.delete_message(cbqr.message.chat.id, cbqr.message.message_id)
 
 executor.start_polling(dp)
-
-#  250 W 5V
