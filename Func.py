@@ -31,17 +31,17 @@ def BadWordsCount(text):
 
 def ImgProc(pathfrom, pathto, text):
     ts      = 90
-    font    = ImageFont.truetype(font="times-new-roman.ttf", size=ts, index=0, encoding='UTF-8', layout_engine=None)
+    font    = ImageFont.truetype(font="assets/times-new-roman.ttf", size=ts, index=0, encoding='UTF-8', layout_engine=None)
     oi        = Image.open(pathfrom)
     oi        = oi.resize((800, 800))
-    brd        = Image.open('Border.jpg')
+    brd        = Image.open('assets/Border.jpg')
     brd.paste(oi, (50, 20))
     W, H    = 900, 120
     draw    = ImageDraw.Draw(brd)
     w, h    = draw.textsize(text, font=font)
     while w > W-50 and h > 5:
         ts-=2
-        font = ImageFont.truetype(font="times-new-roman.ttf", size=ts, index=0, encoding='UTF-8', layout_engine=None)
+        font = ImageFont.truetype(font="assets/times-new-roman.ttf", size=ts, index=0, encoding='UTF-8', layout_engine=None)
         w, h    = draw.textsize(text, font=font)
     draw.text(((W-w)/2,820+(H-h)/2), text, fill="white", font=font)
     brd.save(pathto)
@@ -108,8 +108,8 @@ def get_marry(Usr, chat):
 
 def createCert(Name1, Name2, date, marryID):
     print(Name1, Name2)
-    font = ImageFont.truetype(font="times-new-roman.ttf", size=40, index=0, encoding='UTF-8', layout_engine=None)
-    CertBase = Image.open("CertBase.jpg")
+    font = ImageFont.truetype(font="assets/times-new-roman.ttf", size=40, index=0, encoding='UTF-8', layout_engine=None)
+    CertBase = Image.open("assets/CertBase.jpg")
 
     draw = ImageDraw.Draw(CertBase)
 

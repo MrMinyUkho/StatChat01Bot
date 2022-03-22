@@ -85,10 +85,10 @@ async def TextMessageProc(msg: types.Message):
     if text is not None and len(text) != 0:
 
         if text == "/help@StatChat01bot":
-            helpMessage = open("Help.txt", "r").read()
+            helpMessage = open("assets/Help.txt", "r").read()
             await bot.send_message(DBchat.cID, helpMessage)
         elif text in ["/start", "/help"]:
-            await msg.reply("Для полноценной работы добавтье этого бота в группу и разрешите доступ к сообщениям")
+            await msg.reply("Для полноценной работы добавтье меня в группу и разрешите доступ к сообщениям")
 
         if re.match(r"бот|скайнет|бомж", text.lower()) is not None:
             text = "".join(re.split(r"бот|скайнет|бомж", text.lower(), maxsplit=1)).strip()
