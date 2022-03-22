@@ -35,6 +35,22 @@ r   = sr.Recognizer()
 @dp.message_handler(content_types='any')
 async def TextMessageProc(msg: types.Message):
 
+    try:
+        if config.S_MSG == True:
+            if msg.chat.id == config.myid:
+                print(f"send to {config.chat}")
+                await bot.send_message(config.chat, msg.text)
+            if msg.chat.id == config.chat:
+                print(f"send to {config.myid}")
+                await bot.send_message(config.myid, msg.text)
+    except BaseException:
+        pass
+
+    if msg.chat.id > 0:
+        print(f"From user ID:{msg.chat.id}, UserName:{msg['from']['username']}")
+    else:
+        print(f"From chat ID:{msg.chat.id}, UserName:{msg['from']['username']}")
+
     DBchat = Chat.get_or_none(Chat.cID==msg.chat.id)
     if DBchat is None:
         DBchat = Chat(cID = msg.chat.id, ChatName=msg.chat.title)
@@ -53,7 +69,8 @@ async def TextMessageProc(msg: types.Message):
         nowTime = time.time()
         await msg.voice.download(f"AudioFile/{nowTime}.ogg")
         text = SoundProc(f"AudioFile/{nowTime}.ogg")
-        await bot.send_message(msg.chat.id, text)
+        if text != "":
+            await bot.send_message(msg.chat.id, text)
     else:
         text = msg.text if msg.content_type == 'text' else msg.caption
     
@@ -76,13 +93,13 @@ async def TextMessageProc(msg: types.Message):
     DBusr = UpdateUser(DBusr, msg)
     DBusr.save()
     
-    if len(text) != 0:
+    if text is not None and len(text) != 0:
 
         if text == "/help@StatChat01bot":
             helpMessage = open("Help.txt", "r").read()
             await bot.send_message(DBchat.cID, helpMessage)
         elif text in ["/start", "/help"]:
-            await bot.reply("Для полноценной работы добавтье этого бота в группу и разрешите доступ к сообщениям")
+            await msg.reply("Для полноценной работы добавтье этого бота в группу и разрешите доступ к сообщениям")
 
         if re.match(r"бот|скайнет|бомж", text.lower()) is not None:
             text = "".join(re.split(r"бот|скайнет|бомж", text.lower(), maxsplit=1)).strip()
@@ -192,7 +209,7 @@ async def TextMessageProc(msg: types.Message):
                 print(YplotW, YplotB, Xplot)
 
                 plt.clf()
-                plt.plot(Xplot, YplotB[::-1], Xplot, YplotW[::-1])
+                plt.plot(Xplot, YplotB, Xplot, YplotW)
                 plt.ylabel("Количевство слов")
                 plt.xlabel("Время")
                 plt.savefig(f"StatPlot/StPl{tm}.jpg")
@@ -211,8 +228,8 @@ async def TextMessageProc(msg: types.Message):
                         WordsW += YplotW[i]
                         BadWordsW += YplotB[i]
                     
-                    WordsW += YplotW[i]
-                    BadWordsW += YplotB[i]
+                    WordsM += YplotW[i]
+                    BadWordsM += YplotB[i]
 
                 t = f"\
                 Статистика пользователя { UserLink(DBusr) }\
@@ -229,28 +246,13 @@ async def TextMessageProc(msg: types.Message):
 
                 print("\n#--------------Статистика чата----------------------------------------------\n")
 
-                f = []
-                ft = ""
-                if   text.lower().find("месяц")     != -1:
-                    f = User.wM
-                    ft = "месяц"
-                else:
-                    f = User.wA
-                    ft = "всё время"
+                users = User.select().where(User.chat_id == DBchat).order_by(User.wA)
 
-                users = User.select().where(User.chat_id == DBchat).order_by(f)
+                txt = f"Топ болтунов в чате за всё время:\n"
 
                 p = 1
-
-                txt = f"Топ болтунов в чате за {ft}:\n"
-
                 for i in users[::-1]:
-                    txt += f"{p}. { UserLink(i) } - "
-                    if text.lower().find("день") != -1:
-                        txt += str(i.wD)
-                    else:
-                        txt += str(i.wA)
-                    txt += f" слов.\n"
+                    txt += f"{p}. { UserLink(i) } - {i.wA} слов.\n"
                     p += 1
 
                 await bot.send_message(DBchat.cID, txt)
@@ -375,3 +377,5 @@ async def process_callback_kb1btn1(callback_query: types.CallbackQuery):
         await bot.delete_message(cbqr.message.chat.id, cbqr.message.message_id)
 
 executor.start_polling(dp)
+
+#  250 W 5V
