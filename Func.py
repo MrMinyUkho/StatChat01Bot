@@ -1,10 +1,20 @@
 import os
+import json
 import time
+import requests
 import soundfile as sf
 import speech_recognition as sr
 from PIL import Image, ImageDraw, ImageFont
 from Models import Married
 from Models import User as UserFdb
+
+try:
+	import sys
+	sys.path.insert(1, './config/')
+	import config
+except Exception:
+	print("You have not created a configuration file, create a config.py file and add the TOKEN variable there with the access token to the telegram bot api")
+	quit()
 
 r   = sr.Recognizer()
 
@@ -127,3 +137,31 @@ def UserLink(User=None, Name=None, ID=None):
 		Name    = User.FrstName
 		ID      = User.TgID
 	return f"<a href='tg://user?id={ ID }'>{ Name }</a>"
+
+def RandOrg(mn, mx):
+
+	raw_data = {
+		"jsonrpc": "2.0",
+		"method": "generateIntegers",
+		"params": {
+			"apiKey": config.RANDOM_KEY,
+			"n": 6,
+			"min": mn,
+			"max": mx,
+			"replacement": True
+		},
+		'id':1
+	}
+
+	headers = {'Content-type': 'application/json','Content-Length': '200', 'Accept': 'application/json'}
+
+	data=json.dumps(raw_data)
+
+	response = requests.post(
+		url='https://api.random.org/json-rpc/2/invoke',
+		data=data,
+		headers=headers
+		)
+
+	print(int(response.text.split("[")[1].split("]")[0].split(",")[0]))
+	return int(response.text.split("[")[1].split("]")[0].split(",")[0])

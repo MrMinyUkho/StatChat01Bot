@@ -17,6 +17,8 @@ from aiogram import Bot, Dispatcher, executor, types
 # Config
 
 try:
+	import sys
+	sys.path.insert(1, './config/')
 	import config
 except Exception:
 	print("You have not created a configuration file, create a config.py file and add the TOKEN variable there with the access token to the telegram bot api")
@@ -111,16 +113,17 @@ async def TextMessageProc(msg: types.Message):
 
 				print("\n#--------Выростить писюн--------------------------------------------------\n")
 
-				ri = choice([-5,-4,-3,-2,-1, 1, 2, 3, 4, 5 , 6, 7, 8, 9, 10])
+				ri = 0
 				recent_time = datetime.time(hour=23-datetime.datetime.now().hour, minute=59-datetime.datetime.now().minute)
 				if DBusr.dicku != datetime.date.today():
 
 
 					if DBusr.dickl is None:
-						ri = choice([1, 2, 3, 4, 5 , 6, 7, 8, 9, 10])
+						ri = RandOrg(1, 10)
 						await msg.reply(f"{ UserLink(DBusr) }, добро пожаловать в игру пэсюн!\nТвой песюн уже вырос на { ri } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
 						DBusr.dickl = 0
 					else:
+						ri = RandOrg(-5, 10)
 						if ri > 0:
 							await msg.reply(f"{ UserLink(DBusr) }, твой песюн вырос на { ri } см.\nПродолжай играть через { recent_time.hour } ч. и { recent_time.minute } мин.\nХорошего дня)")
 						else:
@@ -250,13 +253,9 @@ async def TextMessageProc(msg: types.Message):
 				print("\n#--------------Статистика чата----------------------------------------------\n")
 
 				tm = time.time()
-
-				users = User.select().where(User.chat_id == DBchat)
-
-				txt = f"Топ болтунов в чате за всё время:\n"
-
 				YXax = []
 
+				users = User.select().where(User.chat_id == DBchat)
 				for i in users[::-1]:
 					Stat = WordsPerDay.select().where(WordsPerDay.chat_id==DBchat, WordsPerDay.Usr==i).order_by(WordsPerDay.Day)
 					us = UserStat(usr=i)
@@ -264,30 +263,42 @@ async def TextMessageProc(msg: types.Message):
 						us.Day.append(f"{j.Day.day},{str(j.Day.month)}")
 						us.WPD.append(j.Words)
 						us.BPD.append(j.BadWords)
+
 					YXax.append(us)
 
 				YXax = sorted(YXax, key=UserStat.WordsSum, reverse=True)
+				who = "болтунов"
+				plt.ylabel("Количевство слов")
+				if re.match(r"топ быдла", text) is not None:
+					YXax = sorted(YXax, key=UserStat.BadWsSum, reverse=True)
+					who = "быдла"
+					plt.ylabel("Количевство матов")
 
 				plt.clf()
 
 				fig, ax = plt.subplots(layout='constrained')
 
 				ax.grid(True)
+				
+				tx = f"Топ { who } по чату:\n"
 
+				p = 1
 				for i in YXax[:9]:
 					if re.match(r"топ быдла", text) is not None:
 						ax.plot(i.Day, i.BPD, label=i.User.FrstName)
-						plt.ylabel("Количевство матов")
+						tx += f"{p}. {UserLink(i.User)} - {i.BadWsSum()} матов.\n"
 					else:
 						ax.plot(i.Day, i.WPD, label=i.User.FrstName)
-						plt.ylabel("Количевство слов")
+						tx += f"{p}. {UserLink(i.User)} - {i.WordsSum()} слов.\n"
+
+					p+=1
 
 				ax.legend()
 
-				plt.xlabel("Время")
+				plt.xlabel("Дата")
 				plt.savefig(f"StatPlot/StChatPl{tm}.jpg")
 
-				await bot.send_photo(DBchat.cID, photo=open(f"StatPlot/StChatPl{tm}.jpg", "rb"))
+				await bot.send_photo(DBchat.cID, photo=open(f"StatPlot/StChatPl{tm}.jpg", "rb"), caption=tx)
 
 				print("\n#--------------------------------------------------------------------------\n")
 
