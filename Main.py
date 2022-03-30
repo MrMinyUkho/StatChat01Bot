@@ -92,6 +92,25 @@ async def TextMessageProc(msg: types.Message):
 		elif text in ["/start", "/help"]:
 			await msg.reply("Для полноценной работы добавтье меня в группу и разрешите доступ к сообщениям")
 
+		if msg.reply_to_message is not None:
+			RepUsr = User.get_or_none(User.TgID == msg.reply_to_message["from"]["id"], User.chat_id == DBchat)
+			if RepUsr is not None:
+				if len(text.split()) == 1 and ("+" in text or "да" in text.lower() or "соглас" in text.lower()):
+					if RepUsr == DBusr:
+						await msg.reply("Ага, щас")
+					else:
+						RepUsr.reputation += 1
+						RepUsr.save()
+						await bot.send_message(DBchat.cID, f"Репутация {UserLink(RepUsr)} увеличена!")
+				elif len(text.split()) == 1 and ("-" in text or "нет" in text.lower()):
+					RepUsr.reputation -= 1
+					if RepUsr.reputation <= -1:
+						await bot.send_message(DBchat.cID, f"Репутация {UserLink(RepUsr)} и так на дне, куда ниже!")
+					elif RepUsr.reputation <= -15:
+						await bot.send_message(DBchat.cID, f"Репутацией {UserLink(RepUsr)} пробили дно, моё почтение)")
+					RepUsr.save()
+					await bot.send_message(DBchat.cID, f"Репутация {UserLink(RepUsr)} уменьшена!")
+
 		if re.match(r"бот|скайнет|бомж", text.lower()) is not None:
 			text = "".join(re.split(r"бот|скайнет|бомж", text.lower(), maxsplit=1)).strip()
 
@@ -392,6 +411,16 @@ async def TextMessageProc(msg: types.Message):
 						pho = open(f"Cert/Marry{marry.id}.jpg", "rb")
 
 					await bot.send_photo(DBchat.cID, photo=pho)
+			elif re.match(r"репутация", text) is not None:
+				RepUsrs = User.select().where(User.chat_id == DBchat).order_by(User.reputation)
+
+				t = "Репутация этого чата\n\n"
+				p = 1
+				if RepUsrs != []:
+					for i in RepUsrs[::-1]:
+						t += f"{p}. { UserLink(i) } - {i.reputation}.\n" 
+						p += 1
+				await msg.reply(t)
 
 
 @dp.callback_query_handler()

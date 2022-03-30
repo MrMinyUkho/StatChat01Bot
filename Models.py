@@ -44,6 +44,8 @@ class User(BaseModel):
 	dickl   = db.IntegerField()
 	dicku   = db.DateField()
 
+	reputation	= db.IntegerField(default=0)
+
 	class Meta:
 		table_name = "Users"
 
