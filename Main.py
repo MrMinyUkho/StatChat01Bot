@@ -90,7 +90,7 @@ async def TextMessageProc(msg: types.Message):
 			helpMessage = open("assets/Help.txt", "r").read()
 			await bot.send_message(DBchat.cID, helpMessage)
 		elif text in ["/start", "/help"]:
-			await msg.reply("Для полноценной работы добавтье меня в группу и разрешите доступ к сообщениям")
+			await msg.reply("Для полноценной работы добавьте меня в группу и разрешите доступ к сообщениям")
 
 		if msg.reply_to_message is not None:
 			RepUsr = User.get_or_none(User.TgID == msg.reply_to_message["from"]["id"], User.chat_id == DBchat)
